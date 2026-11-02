@@ -1,18 +1,32 @@
 #!/usr/bin/env python3
 # =====================================================================
-# train_50m_baseline.py — Train NTv2 50M model as baseline comparison
+# train_50m_baseline_v2.py — Train NTv2 50M with ALL layers unfrozen
 # =====================================================================
 #
 # Usage (on GPU server):
-#   python3 train_50m_baseline.py
+#   python3 train_50m_baseline_v2.py
 #
 # Purpose:
 #   Train the natively smaller NTv2-50M model using the EXACT SAME
-#   pipeline as the 100M model to produce a fair baseline comparison.
+#   pipeline as the 100M model to produce a FAIR baseline comparison.
 #   The compressed 100M@50% (~50M active params) should outperform
 #   this natively 50M model, demonstrating that LTH compression
 #   preserves deep representational structure that a smaller native
 #   architecture cannot learn.
+#
+# CRITICAL FIX (v2):
+#   The original train_50m_baseline.py set num_layers_to_unfreeze=4,
+#   incorrectly assuming the 50M model had only 4 transformer layers.
+#   The ACTUAL NTv2-50M architecture (from official HuggingFace
+#   config.json) has:
+#     - 12 transformer layers (NOT 4)
+#     - 16 attention heads (NOT 4)
+#     - 512 hidden dimension
+#     - 2048 FFN intermediate size
+#     - ~50M total parameters
+#   The old script only unfroze 4 of 12 layers, leaving 8 frozen.
+#   This version sets num_layers_to_unfreeze=12 for FULL fine-tuning,
+#   matching the 100M model's full fine-tuning (22/22 layers).
 #
 # What stays identical to the 100M training:
 #   - Dataset: consolidated_full (100k train dataset05 + 25k val dataset06)
@@ -20,20 +34,20 @@
 #   - Loss: Focal loss (gamma=1.5, label_smoothing=0.05)
 #   - Optimizer: AdamW (backbone_lr=5e-6, head_lr=5e-4)
 #   - Schedule: Cosine warmup (15% warmup fraction)
-#   - Full fine-tuning (all layers unfrozen)
+#   - Full fine-tuning (ALL layers unfrozen)
 #   - Evaluation: same metrics (AUROC, Acc, F1, MCC, etc.)
 #
-# What changes:
+# What changes (vs 100M):
 #   - model_name → nucleotide-transformer-v2-50m-multi-species
-#   - num_layers_to_unfreeze → 4 (= all layers in the 50M model)
-#   - Output dir → output/ntv2_50m_baseline/
+#   - num_layers_to_unfreeze → 12 (= all 12 layers in the 50M model)
+#   - Output dir → output/ntv2_50m_baseline_v2/
 #
 # After training, test on unseen data with:
-#   python3 test_unseen.py --weights output/ntv2_50m_baseline/ntv2_50m_baseline_final.pth
+#   python3 test_unseen.py --weights output/ntv2_50m_baseline_v2/ntv2_50m_baseline_v2_final.pth
 #
-# Architecture comparison:
-#   100M: 22 layers × 512 hidden × 8 heads  → 95.9M params
-#    50M:  4 layers × 512 hidden × 4 heads  → ~50M params
+# Architecture (official HuggingFace config.json):
+#   100M: 22 layers × 512 hidden ×  8 heads  → 95.9M params
+#    50M: 12 layers × 512 hidden × 16 heads  →  ~50M params
 # =====================================================================
 
 import os
@@ -53,13 +67,13 @@ from utils import load_hg38, set_seed, get_device, supports_amp
 
 
 # =====================================================================
-# CONFIGURATION — 50M model with everything else identical to 100M
+# CONFIGURATION — 50M model with FULL fine-tuning (all 12 layers)
 # =====================================================================
 
 CFG = {
-    # Model — THIS IS THE ONLY ARCHITECTURAL CHANGE
+    # Model — NTv2-50M with ALL 12 layers unfrozen
     'model_name': 'InstaDeepAI/nucleotide-transformer-v2-50m-multi-species',
-    'num_layers_to_unfreeze': 4,        # ALL 4 layers (full fine-tuning)
+    'num_layers_to_unfreeze': 12,       # ALL 12 layers (full fine-tuning)
     'seq_length': 1000,                 # Same 1000bp context window
 
     # Data — identical to 100M
@@ -90,7 +104,7 @@ CFG = {
     'num_workers': 4,
 
     # Output
-    'save_dir': os.path.join('.', 'output', 'ntv2_50m_baseline'),
+    'save_dir': os.path.join('.', 'output', 'ntv2_50m_baseline_v2'),
 }
 
 
@@ -103,19 +117,24 @@ def main():
 
     # --- Banner ---
     print("\n" + "=" * 70)
-    print("   NTv2 50M BASELINE — COMPARATIVE TRAINING")
+    print("   NTv2 50M BASELINE v2 — FULL FINE-TUNING (ALL 12 LAYERS)")
     print("=" * 70)
     print(f"   Model:     {CFG['model_name']}")
-    print(f"   Layers:    4 (all unfrozen — full fine-tuning)")
-    print(f"   Hidden:    512 (same as 100M)")
+    print(f"   Layers:    12 (all unfrozen — full fine-tuning)")
+    print(f"   Heads:     16 attention heads per layer")
+    print(f"   Hidden:    512")
+    print(f"   FFN:       2048 (4× hidden)")
     print(f"   Dataset:   consolidated_full (100k train + 25k val)")
-    print(f"   Purpose:   Baseline for LTH compressed 100M comparison")
+    print(f"   Purpose:   FAIR baseline for LTH compressed 100M comparison")
     print(f"   Approach:  Dual-sequence + Full FT + Focal loss")
     print(f"   Context:   {CFG['seq_length']}bp from hg38")
     print(f"   Epochs:    {CFG['epochs']} | Batch: {CFG['batch_size']} "
           f"(eff: {CFG['batch_size'] * CFG['grad_accum_steps']})")
     print(f"   Patience:  {CFG['patience']} epochs")
     print(f"   Output:    {CFG['save_dir']}")
+    print()
+    print(f"   ⚠️  FIX: Original train_50m_baseline.py only unfroze 4/12")
+    print(f"        layers. This v2 script unfreezes ALL 12 layers.")
     print("=" * 70)
 
     # --- Seed ---
@@ -146,7 +165,7 @@ def main():
 
     # --- Model ---
     print("\n" + "-" * 70)
-    print("4. Building NTv2-50M Dual-Sequence Classifier")
+    print("4. Building NTv2-50M Dual-Sequence Classifier (FULL FT)")
     print("-" * 70)
     model = NTv2DualSeqClassifier(
         model_name=CFG['model_name'],
@@ -158,6 +177,8 @@ def main():
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     backbone_params = sum(p.numel() for p in model.backbone.parameters() if p.requires_grad)
     head_params = sum(p.numel() for p in model.classifier.parameters())
+    n_layers = model.backbone.config.num_hidden_layers
+    n_heads = model.backbone.config.num_attention_heads
 
     print(f"   Total params:     {total_params:,}")
     print(f"   Trainable:        {trainable_params:,} "
@@ -165,7 +186,15 @@ def main():
     print(f"   Backbone (train): {backbone_params:,}")
     print(f"   Head:             {head_params:,}")
     print(f"   Hidden size:      {model.hidden_size}")
-    print(f"   Num layers:       {model.backbone.config.num_hidden_layers}")
+    print(f"   Num layers:       {n_layers}")
+    print(f"   Attention heads:  {n_heads}")
+    print(f"   Layers unfrozen:  {CFG['num_layers_to_unfreeze']} / {n_layers}")
+
+    # Sanity check: all layers should be unfrozen
+    if CFG['num_layers_to_unfreeze'] >= n_layers:
+        print(f"   ✅ FULL fine-tuning confirmed (all {n_layers} layers trainable)")
+    else:
+        print(f"   ⚠️  PARTIAL fine-tuning: {CFG['num_layers_to_unfreeze']}/{n_layers} layers")
 
     if torch.cuda.is_available():
         gpu_mem = torch.cuda.memory_allocated() / 1e9
@@ -261,7 +290,7 @@ def main():
 
     # --- Training ---
     print("\n" + "-" * 70)
-    print("7. Training (Full Fine-Tuning — 50M)")
+    print("7. Training (Full Fine-Tuning — 50M, ALL 12 LAYERS)")
     print("-" * 70)
 
     criterion = FocalLoss(
@@ -281,9 +310,9 @@ def main():
     print("-" * 70)
 
     final = evaluate(model, val_loader, device, use_amp=use_amp,
-                     desc="Final Eval (50M)")
+                     desc="Final Eval (50M v2)")
 
-    print(f"\n   FINAL RESULTS (best 50M model):")
+    print(f"\n   FINAL RESULTS (best 50M model — all 12 layers fine-tuned):")
     print_metrics(final, prefix="   ")
 
     # --- Save Weights-Only .pth ---
@@ -294,7 +323,7 @@ def main():
     save_dir = CFG['save_dir']
     os.makedirs(save_dir, exist_ok=True)
 
-    model_filename = "ntv2_50m_baseline_final.pth"
+    model_filename = "ntv2_50m_baseline_v2_final.pth"
     weights_path = os.path.join(save_dir, model_filename)
 
     # Save ONLY the state_dict
@@ -334,7 +363,8 @@ def main():
     config_save['model_architecture'] = {
         'model_name': CFG['model_name'],
         'hidden_size': model.hidden_size,
-        'num_hidden_layers': model.backbone.config.num_hidden_layers,
+        'num_hidden_layers': n_layers,
+        'num_attention_heads': n_heads,
         'num_layers_to_unfreeze': CFG['num_layers_to_unfreeze'],
         'dropout': CFG['dropout'],
         'pooling': 'mean',
@@ -360,7 +390,7 @@ def main():
     ).to(device)
     verify_model.load_state_dict(loaded_sd)
     verify_metrics = evaluate(verify_model, val_loader, device, use_amp=use_amp,
-                              desc="Verify (50M)")
+                              desc="Verify (50M v2)")
     match = abs(verify_metrics['accuracy'] - final['accuracy']) < 0.01
     print(f"   Reload check: Acc={verify_metrics['accuracy']:.2f}% | "
           f"AUROC={verify_metrics['auroc']:.2f}% — "
@@ -372,9 +402,10 @@ def main():
     total_str = str(datetime.timedelta(seconds=int(total_pipeline_time)))
 
     print("\n" + "=" * 70)
-    print("   🎯 50M BASELINE TRAINING COMPLETE")
+    print("   🎯 50M BASELINE v2 TRAINING COMPLETE (ALL 12 LAYERS FINE-TUNED)")
     print("=" * 70)
-    print(f"   Model:      NTv2-50M (4 layers, 512 hidden)")
+    print(f"   Model:      NTv2-50M (12 layers, 512 hidden, 16 heads)")
+    print(f"   Fine-tuned: ALL 12/12 layers + embeddings")
     print(f"   Dataset:    consolidated_full (100k train + 25k val)")
     print(f"   Approach:   Dual-seq + Focal loss + Full fine-tuning")
     print(f"   Samples:    {len(train_dataset) + len(val_dataset):,} total "
