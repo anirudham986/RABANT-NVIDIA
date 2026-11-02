@@ -154,11 +154,22 @@ def compute_layer_ablation(model, fold_id):
     n_prune = int(n_total * 0.50)
     global_threshold = torch.kthvalue(global_concat, n_prune).values.item()
 
+    # Convert to numpy for statistical operations (torch.quantile crashes on
+    # tensors with >~16M elements; numpy handles any size)
+    global_np = global_concat.numpy()
+    global_mean = float(np.mean(global_np))
+    global_std = float(np.std(global_np))
+    global_median = float(np.median(global_np))
+    global_q25 = float(np.percentile(global_np, 25))
+    global_q75 = float(np.percentile(global_np, 75))
+
     print(f"\n   Global statistics (all prunable weights):")
     print(f"     Total prunable parameters:  {n_total:,}")
-    print(f"     Global mean |w|:            {global_concat.mean().item():.6f}")
-    print(f"     Global std  |w|:            {global_concat.std().item():.6f}")
-    print(f"     Global median |w|:          {global_concat.median().item():.6f}")
+    print(f"     Global mean |w|:            {global_mean:.6f}")
+    print(f"     Global std  |w|:            {global_std:.6f}")
+    print(f"     Global median |w|:          {global_median:.6f}")
+    print(f"     Global Q25 |w|:             {global_q25:.6f}")
+    print(f"     Global Q75 |w|:             {global_q75:.6f}")
     print(f"     50% pruning threshold:      {global_threshold:.6f}")
 
     # Per-layer analysis
@@ -178,9 +189,7 @@ def compute_layer_ablation(model, fold_id):
         pct_below = 100.0 * below_threshold / n_params
 
         # Determine which quartile this layer's mean falls in
-        # relative to the global distribution
-        global_q25 = torch.quantile(global_concat, 0.25).item()
-        global_q75 = torch.quantile(global_concat, 0.75).item()
+        # relative to the global distribution (q25/q75 computed above via numpy)
         if mean_mag < global_q25:
             quartile = "LOW"
         elif mean_mag < global_threshold:
@@ -292,9 +301,11 @@ def compute_layer_ablation(model, fold_id):
         'per_group': grouped_stats,
         'global': {
             'total_prunable_params': n_total,
-            'global_mean_magnitude': global_concat.mean().item(),
-            'global_std_magnitude': global_concat.std().item(),
-            'global_median_magnitude': global_concat.median().item(),
+            'global_mean_magnitude': global_mean,
+            'global_std_magnitude': global_std,
+            'global_median_magnitude': global_median,
+            'global_q25_magnitude': global_q25,
+            'global_q75_magnitude': global_q75,
             'threshold_50pct': global_threshold,
         },
     }
