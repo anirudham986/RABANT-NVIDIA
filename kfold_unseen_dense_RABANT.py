@@ -15,7 +15,7 @@
 #   09_cbio_gnomad_test_unseen.csv
 #
 # This is the unseen-test analogue of kfold_dense_100m.py and
-# kfold_magnitud_compressed.py: every fold model is tested independently, then
+# kfold_magnitude_compressed.py: every fold model is tested independently, then
 # metrics are aggregated across the five fold checkpoints.
 # =============================================================================
 
