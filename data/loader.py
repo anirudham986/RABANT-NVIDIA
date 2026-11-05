@@ -226,7 +226,7 @@ def _balance_and_split(df: pd.DataFrame, label_col: str,
             _print_split_stats(train_out, test_out)
             return train_out, test_out
         else:
-            print(f"   ⚠️ SPLIT column gives only {pct_test*100:.1f}% test — "
+            print(f"SPLIT column gives only {pct_test*100:.1f}% test — "
                   f"using stratified random 85/15 split instead")
 
     # ------------------------------------------------------------------
@@ -380,7 +380,7 @@ def _load_full_train(data_dir: str, info: dict) -> tuple:
             f"holdout test set! Data leakage detected. "
             f"Regenerate holdout with 'python data/build_holdout.py'."
         )
-    print(f"   [✅] Train–Test overlap: 0 variants (zero leakage)")
+    print(f"Train–Test overlap: 0 variants (zero leakage)")
 
     # Print statistics
     print(f"\n   Full-train mode (all samples for training):")
