@@ -31,7 +31,7 @@ def get_device() -> torch.device:
         torch.cuda.empty_cache()
         return device
 
-    print("   ⚠️ No GPU detected — using CPU (training will be slow)")
+    print("No GPU detected — using CPU (training will be slow)")
     return torch.device('cpu')
 
 
@@ -56,11 +56,11 @@ def supports_amp() -> bool:
     if major >= 7:
         # Volta (V100, GV100), Turing (T4), Ampere (A100), Hopper — all fine
         dtype = "bfloat16" if major >= 8 else "float16"
-        print(f"   AMP:        ✅ enabled ({dtype})")
+        print(f"   AMP:enabled ({dtype})")
         return True
 
     # Pascal (P100, sm_60/61) — AMP is unreliable with modern PyTorch
-    print(f"   ⚠️ GPU compute capability sm_{cap[0]}{cap[1]} < sm_70 — "
+    print(f"GPU compute capability sm_{cap[0]}{cap[1]} < sm_70 — "
           f"disabling AMP (mixed precision)")
     print(f"   Training will use float32 — slightly slower but compatible")
     return False
