@@ -1,46 +1,7 @@
-#!/usr/bin/env python3
-# =============================================================================
-# jackpot_sparsity.py
-# =============================================================================
-#
-# SINGLE ENTRY POINT — run this file and walk away.
-#
-# Usage:
-#   python3 jackpot_sparsity.py
-#
-# What it does (fully automated, no user input required):
-#   1. Loads the dense model from ntv2_consolidated_full_final.pth
-#   2. Builds train/val DataLoaders (datasets 05 + 06)
-#   3. Runs MAGNITUDE-ONLY LTH compression at 4 new sparsity levels:
-#        55%, 70%, 80%, 90%
-#      to identify the critical sparsity threshold ("sweet spot")
-#      beyond which AUROC monotonically declines.
-#   4. For each sparsity:
-#        - Computes magnitude importance scores
-#        - Creates global binary masks
-#        - Rewinds surviving weights to initial pre-trained values
-#        - Fine-tunes with frozen masks (same epochs, SWA, focal loss)
-#        - Evaluates on validation set
-#        - Saves weights-only .pth file
-#   5. Prints a summary table comparing all 4 sparsity levels
-#
-# Output (all in ./output/lth_compressed/magnitude_jackpot/):
-#   magnitude_sparsity55.pth   — weights only, directly loadable
-#   magnitude_sparsity70.pth
-#   magnitude_sparsity80.pth
-#   magnitude_sparsity90.pth
-#   magnitude_jackpot_results.json — per-sparsity metrics
-#
-# Then run test_compressed.py separately for unseen test evaluation.
-#
-# Dense model path (same as main pipeline):
 DENSE_MODEL_PATH = (
-    '/media/rvcse22/CSERV/dnai/dnai-gpu1/output/'
-    'ntv2_consolidated_full_trained/ntv2_consolidated_full_final.pth'
+    #insert data directory here
+    #insert data path here
 )
-#
-# Expected wall-clock time: ~12–20 hours for 4 sparsity levels on a 42GB GPU.
-# =============================================================================
 
 # ── 0. Environment setup ─────────────────────────────────────────────────────
 import os
@@ -250,7 +211,7 @@ def main():
         actual_sp = count_sparsity(model, masks)
 
         t_elapsed = time.time() - t_start
-        print(f"\n  ✅ Magnitude @ {sp_pct}% done in {t_elapsed/60:.1f} min")
+        print(f"\nMagnitude @ {sp_pct}% done in {t_elapsed/60:.1f} min")
         print(f"     Actual sparsity: {actual_sp*100:.2f}%")
 
         print_metrics_block(
