@@ -115,7 +115,7 @@ def train(model, train_loader, val_loader, device, criterion, cfg: dict,
     # Resume from checkpoint (if provided)
     # ------------------------------------------------------------------
     if resume_from is not None:
-        print(f"\n   ♻️  RESUMING from: {resume_from}")
+        print(f"\nRESUMING from: {resume_from}")
         ckpt = torch.load(resume_from, map_location=device, weights_only=False)
         model.load_state_dict(ckpt['model_state_dict'])
 
@@ -138,10 +138,10 @@ def train(model, train_loader, val_loader, device, criterion, cfg: dict,
                     history[key] = []
 
         best_state = deepcopy(model.state_dict())
-        print(f"   ♻️  Resuming from epoch {start_epoch} "
+        print(f"Resuming from epoch {start_epoch} "
               f"(best: AUROC={best_auroc:.2f}% Acc={best_acc:.2f}%)")
     else:
-        print(f"\n   🚀 Starting fresh training from epoch 1")
+        print(f"\nStarting fresh training from epoch 1")
 
     # ------------------------------------------------------------------
     # Training loop
@@ -239,18 +239,18 @@ def train(model, train_loader, val_loader, device, criterion, cfg: dict,
         avg_grad_norm = np.mean(epoch_grad_norms) if epoch_grad_norms else 0.0
         lr = scheduler.get_last_lr()[0]
 
-        print(f"\n   📊 TRAIN  | Loss={avg_loss:.4f} | Acc={train_acc:.2f}% | "
+        print(f"\nTRAIN  | Loss={avg_loss:.4f} | Acc={train_acc:.2f}% | "
               f"AvgGradNorm={avg_grad_norm:.3f} | LR={lr:.2e} | {elapsed:.0f}s")
 
         # ---- Full validation ------------------------------------------
-        print(f"   📊 VALIDATION...")
+        print(f"VALIDATION...")
         val_metrics = evaluate(
             model, val_loader, device, use_amp=use_amp,
             desc=f"Val Ep{epoch+1}"
         )
 
         # Print full validation breakdown
-        print(f"\n   📊 VAL    | Acc={val_metrics['accuracy']:.2f}% | "
+        print(f"\nVAL    | Acc={val_metrics['accuracy']:.2f}% | "
               f"AUROC={val_metrics['auroc']:.2f}% | "
               f"F1={val_metrics['f1']:.2f}% | "
               f"MCC={val_metrics['mcc']:.4f}")
@@ -271,7 +271,7 @@ def train(model, train_loader, val_loader, device, criterion, cfg: dict,
             sign_auroc = '+' if delta_auroc >= 0 else ''
             sign_acc = '+' if delta_acc >= 0 else ''
             sign_loss = '+' if delta_loss >= 0 else ''
-            print(f"   📈 DELTA  | "
+            print(f"DELTA  | "
                   f"ΔAUROC={sign_auroc}{delta_auroc:.2f}% | "
                   f"ΔAcc={sign_acc}{delta_acc:.2f}% | "
                   f"ΔLoss={sign_loss}{delta_loss:.4f}")
@@ -284,7 +284,7 @@ def train(model, train_loader, val_loader, device, criterion, cfg: dict,
         eta_seconds = avg_epoch_time * epochs_remaining
         eta_str = str(datetime.timedelta(seconds=int(eta_seconds)))
         elapsed_str = str(datetime.timedelta(seconds=int(total_elapsed)))
-        print(f"   ⏱ TIME   | Epoch: {elapsed:.0f}s | "
+        print(f"TIME   | Epoch: {elapsed:.0f}s | "
               f"Elapsed: {elapsed_str} | ETA: {eta_str}")
 
         # Track history
@@ -309,7 +309,7 @@ def train(model, train_loader, val_loader, device, criterion, cfg: dict,
             best_epoch = epoch
             patience_counter = 0
 
-            print(f"\n   🎯 NEW BEST | AUROC={val_metrics['auroc']:.2f}% "
+            print(f"\nNEW BEST | AUROC={val_metrics['auroc']:.2f}% "
                   f"Acc={val_metrics['accuracy']:.2f}% "
                   f"F1={val_metrics['f1']:.2f}% "
                   f"MCC={val_metrics['mcc']:.4f} (epoch {epoch + 1})")
@@ -336,10 +336,10 @@ def train(model, train_loader, val_loader, device, criterion, cfg: dict,
     # ------------------------------------------------------------------
     if best_state is not None:
         model.load_state_dict(best_state)
-        print(f"\n   ✅ Restored best model from epoch {best_epoch + 1} "
+        print(f"\nRestored best model from epoch {best_epoch + 1} "
               f"(AUROC={best_auroc:.2f}%)")
     else:
-        print(f"\n   ⚠️ No improvement during training — using final weights")
+        print(f"\nNo improvement during training — using final weights")
 
     total_time = time.time() - training_start_time
     total_str = str(datetime.timedelta(seconds=int(total_time)))
