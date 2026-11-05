@@ -177,7 +177,7 @@ def build_holdout(data_dir: str, out_dir: str, n_per_class: int = 12_500,
     # Verify the filter worked
     leak_check = set(df_leftover['VARIANT_KEY']) & train_keys
     assert len(leak_check) == 0, f"FATAL: {len(leak_check)} variants leaked through filter!"
-    print(f"   [✅] Zero overlap with training set confirmed")
+    print(f"Zero overlap with training set confirmed")
 
     # ---- 4. Resolve label conflicts + deduplicate ----
     print("\n" + "-" * 70)
@@ -281,13 +281,13 @@ def build_holdout(data_dir: str, out_dir: str, n_per_class: int = 12_500,
     overlap = holdout_keys & train_keys
     assert len(overlap) == 0, \
         f"FATAL: {len(overlap)} holdout variants overlap with training set!"
-    print(f"   [✅] Holdout–Training overlap: 0 variants")
+    print(f"Holdout–Training overlap: 0 variants")
 
     # Check 2: No duplicates within holdout
     dup_count = holdout.duplicated(subset='VARIANT_KEY').sum()
     assert dup_count == 0, \
         f"FATAL: {dup_count} duplicate variant keys in holdout!"
-    print(f"   [✅] Holdout internal duplicates: 0")
+    print(f"Holdout internal duplicates: 0")
 
     # Check 3: Label balance
     n_p_final = int((holdout['INT_LABEL'] == 1).sum())
@@ -295,19 +295,19 @@ def build_holdout(data_dir: str, out_dir: str, n_per_class: int = 12_500,
     pct_p = 100 * n_p_final / len(holdout)
     assert 45.0 <= pct_p <= 55.0, \
         f"FATAL: Holdout label imbalance: {pct_p:.1f}% pathogenic"
-    print(f"   [✅] Label balance: {pct_p:.1f}% pathogenic "
+    print(f"Label balance: {pct_p:.1f}% pathogenic "
           f"(P={n_p_final:,} B={n_b_final:,})")
 
     # Check 4: Source diversity
     holdout_sources = sorted(holdout['SOURCE_TAG'].unique())
-    print(f"   [✅] Source diversity: {holdout_sources}")
+    print(f"Source diversity: {holdout_sources}")
     for tag in holdout_sources:
         tag_df = holdout[holdout['SOURCE_TAG'] == tag]
         labels = tag_df['INT_LABEL'].value_counts().to_dict()
         print(f"         {tag}: {len(tag_df):,} "
               f"(P={labels.get(1,0):,} B={labels.get(0,0):,})")
 
-    print(f"\n   [✅] ALL HOLDOUT INTEGRITY CHECKS PASSED")
+    print(f"\nALL HOLDOUT INTEGRITY CHECKS PASSED")
 
     # ---- 7. Save ----
     print("\n" + "-" * 70)
@@ -323,7 +323,7 @@ def build_holdout(data_dir: str, out_dir: str, n_per_class: int = 12_500,
     out_path = os.path.join(out_dir, '06_holdout_25k_unseen.csv')
     df_out.to_csv(out_path, index=False)
 
-    print(f"   ✅ Saved: {out_path}")
+    print(f"   Saved: {out_path}")
     print(f"   Rows:    {len(df_out):,}")
     print(f"   Cols:    {list(df_out.columns)}")
 
@@ -361,8 +361,8 @@ def main():
     print(f"   Total:        {2 * args.n_per_class:,} variants")
     print(f"   Pathogenic:   {args.n_per_class:,}")
     print(f"   Benign:       {args.n_per_class:,}")
-    print(f"   Leakage:      ✅ ZERO — verified against training set")
-    print(f"   Duplicates:   ✅ ZERO — fully deduplicated")
+    print(f"   Leakage:      ZERO — verified against training set")
+    print(f"   Duplicates:   ZERO — fully deduplicated")
     print(f"\n   Next step: python train.py --dataset consolidated_full")
     print("=" * 70)
 
