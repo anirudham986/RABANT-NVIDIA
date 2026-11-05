@@ -1,58 +1,8 @@
-#!/usr/bin/env python3
-# =============================================================================
-# compression_pipeline.py
-# =============================================================================
-#
-# SINGLE ENTRY POINT — run this file and walk away.
-#
-# Usage:
-#   python compression_pipeline.py
-#
-# What it does (fully automated, no user input required):
-#   1. Installs missing dependencies if needed
-#   2. Loads the dense model from ntv2_consolidated_full_final.pth
-#   3. Builds train/val DataLoaders (datasets 05 + 06)
-#   4. Runs 4 individual LTH compression pipelines:
-#        (a) Magnitude-only
-#        (b) EMA gradient-only
-#        (c) Fisher information-only
-#        (d) Weight movement-only
-#      Each is evaluated at 10%, 20%, 30%, 50%, 60% sparsity.
-#      Full metrics are displayed after each individual pipeline.
-#   5. Runs the Hybrid LTH pipeline, which:
-#        - Dynamically weights all 4 signals based on the individual results
-#        - No hardcoded numbers — weights derive from live AUROC rankings
-#        - Uses extra fine-tuning budget (more epochs, earlier SWA)
-#   6. Prints a final cross-scorer comparison table (AUROC × sparsity)
-#
-# Output (all in ./output/lth_compressed/):
-#   magnitude/magnitude_sparsityXX.pth  — weights only, directly loadable
-#   ema/ema_sparsityXX.pth
-#   fisher/fisher_sparsityXX.pth
-#   movement/movement_sparsityXX.pth
-#   hybrid/hybrid_sparsityXX.pth
-#   */_results.json                     — per-sparsity metrics JSON
-#   pipeline_summary.json               — full cross-scorer summary
-#
-# Requirements:
-#   - CUDA GPU with ~40GB VRAM (42GB Quadro/A100 class)
-#   - hg38.fa accessible (set HG38_PATH env var or it auto-searches/downloads)
-#   - ntv2_consolidated_full_final.pth at the path specified in DENSE_MODEL_PATH
-#   - datasets 05 and 06 CSVs in the crct dataset/ folder
-#
-# Dense model path (edit if needed):
 DENSE_MODEL_PATH = (
-    '/media/rvcse22/CSERV/dnai/dnai-gpu1/output/'
-    'ntv2_consolidated_full_trained/ntv2_consolidated_full_final.pth'
+    #insert model directory here
+    #insert data path here
 )
-#
-# Expected wall-clock time: 24–48 hours on a single 42GB GPU.
-# ALL sparsity levels, ALL scorers run automatically — no interaction needed.
-# =============================================================================
 
-# ── 0. Dependency check/install ──────────────────────────────────────────────
-# Set PYTORCH_CUDA_ALLOC_CONF FIRST — before any torch/CUDA init — so that
-# PyTorch uses the expandable-segments allocator which avoids fragmentation OOM.
 import os
 os.environ.setdefault(
     'PYTORCH_CUDA_ALLOC_CONF',
@@ -220,7 +170,7 @@ def main():
         """Load a completed scorer's results JSON and convert back to
         {sparsity_float: metrics_dict} format."""
         json_path = os.path.join(out_dir, f'{scorer_name}_results.json')
-        print(f"\n  📂 Loading saved {scorer_name} results from {json_path}")
+        print(f"\nLoading saved {scorer_name} results from {json_path}")
         with open(json_path, 'r') as f:
             saved = json.load(f)
         results = {}
@@ -265,7 +215,7 @@ def main():
     )
 
     torch.cuda.empty_cache() if device.type == 'cuda' else None
-    print(f"\n  ✅ Movement scorer complete ({(time.time()-t6)/3600:.2f}h)")
+    print(f"\nMovement scorer complete ({(time.time()-t6)/3600:.2f}h)")
 
     # ── Print movement results ────────────────────────────────────────────────
     print(f"\n{'━'*78}")
@@ -316,7 +266,7 @@ def main():
     )
 
     torch.cuda.empty_cache() if device.type == 'cuda' else None
-    print(f"\n  ✅ Hybrid scorer complete ({(time.time()-t7)/3600:.2f}h)")
+    print(f"\nHybrid scorer complete ({(time.time()-t7)/3600:.2f}h)")
 
     # ── Print hybrid results ──────────────────────────────────────────────────
     print(f"\n{'━'*78}")
@@ -356,7 +306,7 @@ def main():
         )
         hybrid_auroc = results_hybrid.get(sp, {}).get('auroc', 0.0)
         delta = hybrid_auroc - best_ind
-        mark = "🏆" if delta > 0 else "⚠"
+        mark = "YES" if delta > 0 else "NO"
         if delta > 0:
             hybrid_wins += 1
         print(f"  {sp*100:8.0f}%  | {best_ind:>18.4f}% ({best_ind_name:<10}) "
@@ -372,9 +322,9 @@ def main():
         h_auroc = results_hybrid.get(sp, {}).get('auroc', 0.0)
         delta = h_auroc - b_auroc
         if sp <= 0.50:
-            status = "✅ EXCEEDS" if delta > 0 else "❌ BELOW target"
+            status = "EXCEEDS" if delta > 0 else "BELOW target"
         else:
-            status = "📉 (expected)" if delta < 0 else "✅ bonus"
+            status = "Decline (expected)" if delta < 0 else "Rewarded bonus"
         print(f"  {sp*100:8.0f}%  | {h_auroc:>14.4f}% | {delta:>+12.4f}% | {status}")
 
     # =========================================================================
@@ -424,7 +374,7 @@ def main():
     # =========================================================================
     sep = "═" * 78
     print(f"\n{sep}")
-    print(f"  🎯 LTH COMPRESSION PIPELINE COMPLETE")
+    print(f"LTH COMPRESSION PIPELINE COMPLETE")
     print(f"{sep}")
     print(f"  Total time:  {total_str}")
     print(f"  Scorers run: magnitude | ema | fisher | movement | hybrid")
