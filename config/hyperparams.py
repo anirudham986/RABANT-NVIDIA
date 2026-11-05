@@ -1,17 +1,7 @@
-# =====================================================================
-# config/hyperparams.py — Central configuration for NTv2 multi-dataset
-# training pipeline. All hyperparameters and per-dataset overrides live
-# here so nothing is hard-coded elsewhere.
-# =====================================================================
-
 import os
 from copy import deepcopy
 
-# ---------------------------------------------------------------------
-# Base configuration (proven on ClinVar+gnomAD → 84% AUROC, 76% Acc)
-# These defaults are shared across all datasets and only overridden
-# where a dataset has specific needs.
-# ---------------------------------------------------------------------
+
 BASE_CFG = {
     # Model
     'model_name': 'InstaDeepAI/nucleotide-transformer-v2-100m-multi-species',
@@ -23,7 +13,7 @@ BASE_CFG = {
 
     # Training — full fine-tuning with differential LR
     'epochs': 20,
-    'batch_size': 32,                  # Per-GPU batch (32GB VRAM)
+    'batch_size': 32,                  # Per-GPU batch
     'grad_accum_steps': 4,             # Effective batch = 128
     'backbone_lr': 5e-6,              # Very low — preserve pre-training
     'head_lr': 5e-4,                  # Higher — learn task fast
@@ -63,31 +53,18 @@ DATASET_CHOICES = {
     'consolidated_full':  'consolidated_full',
 }
 
-# ---------------------------------------------------------------------
-# Per-dataset config overrides
-# Each entry patches BASE_CFG for dataset-specific needs.
-# Empty dict = use all base defaults.
-# ---------------------------------------------------------------------
+
 DATASET_OVERRIDES = {
     'clinvar': {
-        # ClinVar 75k — already balanced ~37.5k/class
-        # Well-curated clinical significance → model learns cleanly
         'max_per_class': 37_498,
     },
     'dbsnp': {
-        # dbSNP 62k — balanced 31.4k/class
-        # NOTE: dbSNP_common (benign) vs dbSNP_ClinVar (pathogenic) — results
-        # may be high because these are source-discriminable. For genuine
-        # pathogenicity learning, use the 'consolidated' dataset.
         'max_per_class': 31_398,
     },
     'cbioportal': {
-        # cBioPortal 63k pathogenic + gnomAD 55k benign → combined
         'max_per_class': 50_000,
     },
     'consolidated': {
-        # All 4 datasets merged, deduplicated, 5-fold stratified
-        # This is the primary dataset for all final model evaluation
         'max_per_class': 50_000,     # Per-class cap (handled by build script)
         'val_fold': 0,               # Default validation fold (override with --fold)
         'n_folds': 5,
