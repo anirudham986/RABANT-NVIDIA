@@ -1,12 +1,3 @@
-# =====================================================================
-# utils/genome.py — hg38 reference genome loader
-#
-# Auto-discovers hg38.fa from environment variable, common HPC paths,
-# Kaggle input directories, or downloads from UCSC if not found.
-# Uses pyfaidx for efficient random-access sequence retrieval
-# (memory-mapped, no full genome in RAM).
-# =====================================================================
-
 import os
 import glob
 from pyfaidx import Fasta
@@ -31,8 +22,8 @@ def load_hg38() -> tuple:
     has_chr = 'chr1' in set(genome.keys())
     n_contigs = len(genome.keys())
     fa_size_gb = os.path.getsize(fa_path) / 1e9
-    print(f"   ✅ hg38 loaded — {n_contigs} contigs ({fa_size_gb:.1f} GB)")
-    print(f"   📁 Path: {fa_path}")
+    print(f"hg38 loaded — {n_contigs} contigs ({fa_size_gb:.1f} GB)")
+    print(f"Path: {fa_path}")
     return genome, has_chr
 
 
@@ -42,7 +33,7 @@ def _find_hg38() -> str:
     # 1. Environment variable (highest priority)
     env_path = os.environ.get('HG38_PATH')
     if env_path and os.path.exists(env_path):
-        print(f"   ✅ HG38_PATH env: {env_path}")
+        print(f"HG38_PATH env: {env_path}")
         return env_path
 
     # 2. Common file names to search for
@@ -82,19 +73,19 @@ def _find_hg38() -> str:
         for name in fa_names:
             path = os.path.join(d, name)
             if os.path.exists(path) and os.path.getsize(path) > 1e8:
-                print(f"   ✅ Found: {path}")
+                print(f"Found: {path}")
                 return path
 
     # 4. Recursive search in Kaggle input (backward compatibility)
     for pattern in ["/kaggle/input/**/hg38.fa", "/kaggle/input/**/*.fa"]:
         for match in glob.glob(pattern, recursive=True):
             if os.path.getsize(match) > 1e8:  # > 100MB = likely real genome
-                print(f"   ✅ Found: {match}")
+                print(f"Found: {match}")
                 return match
 
     # 5. Download from UCSC as last resort
-    print("   ⬇️  hg38 not found locally — downloading from UCSC...")
-    print("   💡 TIP: Set HG38_PATH=/path/to/hg38.fa to skip this step")
+    print("hg38 not found locally — downloading from UCSC...")
+    print("TIP: Set HG38_PATH=/path/to/hg38.fa to skip this step")
     return _download_hg38()
 
 
@@ -166,6 +157,6 @@ def _decompress_and_return(gz_path: str, fa_path: str) -> str:
             shutil.copyfileobj(f_in, f_out)
 
     os.remove(gz_path)
-    print(f"   ✅ Saved: {fa_path}")
-    print(f"   💡 Set HG38_PATH={fa_path} to avoid re-downloading")
+    print(f"Saved: {fa_path}")
+    print(f"Set HG38_PATH={fa_path} to avoid re-downloading")
     return fa_path
