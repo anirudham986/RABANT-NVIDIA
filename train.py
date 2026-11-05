@@ -67,9 +67,9 @@ def select_dataset() -> str:
         choice = input("   Enter your choice [1/2/3/4/5 or name]: ").strip().lower()
         if choice in DATASET_CHOICES:
             dataset_name = DATASET_CHOICES[choice]
-            print(f"\n   ✅ Selected: {dataset_name}")
+            print(f"\nSelected: {dataset_name}")
             return dataset_name
-        print(f"   ❌ Invalid choice '{choice}'. "
+        print(f"Invalid choice '{choice}'. "
               f"Please enter 1-5 or a dataset name.")
 
 
@@ -146,7 +146,7 @@ def main():
     # --- Resolve resume path ---
     resume_path = args.resume
     if resume_path is not None and not os.path.exists(resume_path):
-        print(f"\n   ❌ Resume checkpoint not found: {resume_path}")
+        print(f"\nResume checkpoint not found: {resume_path}")
         sys.exit(1)
 
     # --- Banner ---
@@ -232,12 +232,12 @@ def main():
             data_dir_check = _find_data_dir()
             holdout_path = os.path.join(data_dir_check, '06_holdout_25k_unseen.csv')
             if not os.path.exists(holdout_path):
-                print("\n   ⚠️ Holdout CSV not found — generating automatically...")
+                print("\nHoldout CSV not found — generating automatically...")
                 build_holdout(data_dir_check, data_dir_check)
                 print()
         except Exception as e:
-            print(f"   ⚠️ Auto-generation failed: {e}")
-            print("   Run 'python data/build_holdout.py' manually.")
+            print(f"Auto-generation failed: {e}")
+            print("Run 'python data/build_holdout.py' manually.")
             sys.exit(1)
 
     train_df, val_df = load_dataset(
@@ -258,7 +258,7 @@ def main():
         )
     except LeakageAuditError as e:
         print("\n" + "!" * 70)
-        print("   🚨 LEAKAGE AUDIT FAILED — TRAINING ABORTED")
+        print("LEAKAGE AUDIT FAILED — TRAINING ABORTED")
         print("!" * 70)
         print(str(e))
         print("\n   Fix the data issue above before rerunning. "
@@ -359,22 +359,22 @@ def main():
 
     weights_size_mb = os.path.getsize(weights_path) / 1e6
     n_params = sum(1 for _ in model.state_dict().keys())
-    print(f"   ✅ Weights saved: {weights_path}")
-    print(f"   📦 Size: {weights_size_mb:.1f} MB | {n_params} parameter tensors")
-    print(f"   📦 Contains: model.state_dict() ONLY (no optimizer, no config, no history)")
-    print(f"   🔗 Use as input to compression pipeline")
+    print(f"Weights saved: {weights_path}")
+    print(f"Size: {weights_size_mb:.1f} MB | {n_params} parameter tensors")
+    print(f"Contains: model.state_dict() ONLY (no optimizer, no config, no history)")
+    print(f"Use as input to compression pipeline")
 
     # --- Save training history JSON ---
     history_path = os.path.join(save_dir, 'training_history.json')
     with open(history_path, 'w') as f:
         json.dump(history, f, indent=2)
-    print(f"   ✅ History: {history_path}")
+    print(f"History: {history_path}")
 
     # --- Save final metrics JSON ---
     metrics_path = os.path.join(save_dir, 'final_metrics.json')
     with open(metrics_path, 'w') as f:
         json.dump(final, f, indent=2)
-    print(f"   ✅ Metrics: {metrics_path}")
+    print(f"Metrics: {metrics_path}")
 
     # --- Save config JSON ---
     config_path = os.path.join(save_dir, 'training_config.json')
@@ -401,7 +401,7 @@ def main():
     }
     with open(config_path, 'w') as f:
         json.dump(config_save, f, indent=2)
-    print(f"   ✅ Config: {config_path}")
+    print(f"Config: {config_path}")
 
     # --- Verify saved weights ---
     print("\n" + "-" * 70)
@@ -428,7 +428,7 @@ def main():
     match = abs(verify_metrics['accuracy'] - final['accuracy']) < 0.01
     print(f"   Reload check: Acc={verify_metrics['accuracy']:.2f}% | "
           f"AUROC={verify_metrics['auroc']:.2f}% — "
-          f"{'✅ PASS' if match else '❌ FAIL (mismatch!)'}")
+          f"{'PASS' if match else 'FAIL (mismatch!)'}")
     del verify_model
 
     # --- Summary ---
@@ -436,7 +436,7 @@ def main():
     total_str = str(datetime.timedelta(seconds=int(total_pipeline_time)))
 
     print("\n" + "=" * 70)
-    print("   🎯 TRAINING COMPLETE")
+    print("TRAINING COMPLETE")
     print("=" * 70)
     print(f"   Dataset:    {dataset_name}")
     if dataset_name == 'consolidated':
@@ -458,14 +458,14 @@ def main():
     print(f"   Recall:     {final['recall']:.2f}%")
     print(f"   Specificity:{final['specificity']:.2f}%")
     print(f"   ──────────────────────────────────────")
-    print(f"   Leakage:    ✅ ZERO (audited before training)")
+    print(f"   Leakage:    ZERO (audited before training)")
     print(f"   Time:       {total_str}")
     print(f"   ──────────────────────────────────────")
     print(f"   Output directory: {save_dir}/")
-    print(f"     📦 {model_filename}          — weights only (for compression)")
-    print(f"     📊 training_history.json      — per-epoch metrics")
-    print(f"     📊 final_metrics.json          — final evaluation results")
-    print(f"     ⚙️  training_config.json       — full config + architecture info")
+    print(f"{model_filename}          — weights only (for compression)")
+    print(f"training_history.json      — per-epoch metrics")
+    print(f"final_metrics.json          — final evaluation results")
+    print(f"training_config.json       — full config + architecture info")
     print("=" * 70)
 
 
