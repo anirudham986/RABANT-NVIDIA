@@ -195,12 +195,12 @@ def main():
     per_class = min(max_07_per_class, max_08_per_class, max_09_per_class)
     total_per_file = per_class * 2
 
-    print(f"\n    ✅ Final per-class count:  {per_class:,}")
-    print(f"    ✅ Total samples per file: {total_per_file:,}")
-    print(f"    ✅ Grand total (3 files):  {total_per_file * 3:,}")
+    print(f"\n  Final per-class count:  {per_class:,}")
+    print(f"    Total samples per file: {total_per_file:,}")
+    print(f"    Grand total (3 files):  {total_per_file * 3:,}")
 
     if per_class == 0:
-        print("\n❌ ERROR: No unseen samples available! Exiting.")
+        print("\nERROR: No unseen samples available! Exiting.")
         sys.exit(1)
 
     # ------------------------------------------------------------------
@@ -256,11 +256,11 @@ def main():
         overlap_06 = test_keys & set(df_06["VARIANT_KEY"].values) if "VARIANT_KEY" in df_06.columns else set()
 
         if overlap_05 or overlap_06:
-            print(f"    ❌ {name} LEAKAGE DETECTED! "
+            print(f"{name} LEAKAGE DETECTED! "
                   f"Overlap with 05: {len(overlap_05)}, 06: {len(overlap_06)}")
             sys.exit(1)
         else:
-            print(f"    ✅ {name}: Zero overlap with 05 and 06")
+            print(f"{name}: Zero overlap with 05 and 06")
 
     # Cross-verify between test sets themselves
     keys_07 = set(df_07_out["VARIANT_KEY"].values)
@@ -272,12 +272,12 @@ def main():
     overlap_08_09 = keys_08 & keys_09
 
     if overlap_07_08 or overlap_07_09 or overlap_08_09:
-        print(f"    ⚠️ Inter-test overlap: 07∩08={len(overlap_07_08)}, "
+        print(f"Inter-test overlap: 07∩08={len(overlap_07_08)}, "
               f"07∩09={len(overlap_07_09)}, 08∩09={len(overlap_08_09)}")
         # Note: inter-test overlap is expected=0 since they come from
         # different sources, but we verify anyway
     else:
-        print("    ✅ Zero inter-test overlap (07, 08, 09 are mutually exclusive)")
+        print("Zero inter-test overlap (07, 08, 09 are mutually exclusive)")
 
     # ------------------------------------------------------------------
     # 7. Save files
@@ -292,9 +292,9 @@ def main():
     df_08_out.to_csv(out_08, index=False)
     df_09_out.to_csv(out_09, index=False)
 
-    print(f"    ✅ {out_07}")
-    print(f"    ✅ {out_08}")
-    print(f"    ✅ {out_09}")
+    print(f"Yes {out_07}")
+    print(f"Yes {out_08}")
+    print(f"Yes {out_09}")
 
     # ------------------------------------------------------------------
     # 8. Summary
