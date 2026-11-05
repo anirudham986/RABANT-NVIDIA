@@ -1,8 +1,8 @@
-# DNAi: Variant Effect Prediction and Model Compression
+# RABANT: Effective Lottery Ticket Compression for Variant Pathogenicity Classification
 
 This repository contains a GPU-oriented pipeline for classifying genomic variants as **pathogenic** or **benign** using the [Nucleotide Transformer v2 100M multi-species model](https://huggingface.co/InstaDeepAI/nucleotide-transformer-v2-100m-multi-species). It includes dataset loading and leakage checks, model training and evaluation, and experimental Lottery Ticket Hypothesis (LTH) pruning/compression workflows.
 
-> **Research software:** This code is intended for experimentation and research. Model predictions are not a substitute for clinical interpretation or professional medical advice.
+> **Research software:** This code is intended for experimentation and research.
 
 ## Contents
 
@@ -136,22 +136,17 @@ The consolidated loader expects a `FOLD_ID` column for k-fold validation. The fu
 
 ## Compression workflow
 
-`compression_pipeline.py` runs LTH-based pruning experiments with magnitude, EMA-gradient, Fisher, movement, and hybrid scoring at sparsity levels of 10%, 20%, 30%, 50%, and 60%. It compares compressed models with a dense baseline and writes results beneath `output/lth_compressed/`.
+`compression/` runs LTH-based pruning experiments with magnitude, EMA-gradient, Fisher, movement, and hybrid scoring at sparsity levels of 10%, 20%, 30%, 50%, and 60%. It compares compressed models with a dense baseline and writes results beneath `output/lth_compressed/`.
 
-Before running it, review the configuration at the top of `compression_pipeline.py` and `compression/shared.py`. In particular:
+Before running it, review the configuration at the top of `compression/shared.py`. In particular:
 
 1. Set `DENSE_MODEL_PATH` to the trained weights file to compress; it is a placeholder in the checked-in script.
 2. Confirm that the training and validation CSVs expected by the compression data-loader configuration are available.
 3. Confirm that the saved result JSON files expected for the magnitude, EMA, and Fisher scorers already exist in their configured output directories. The current pipeline loads these results rather than rerunning those three scorers.
 4. Check the GPU memory, runtime, and dependency requirements before launching the full experiment.
 
-Then run:
 
-```bash
-python compression_pipeline.py
-```
-
-The compression pipeline is an experiment script and may require adapting its paths and saved-result prerequisites for your environment; it is not configured as a plug-and-play command out of the box.
+The compression pipeline is an experiment script and may require adapting its paths and saved-result prerequisites for your environment; it is not configured as a plug-and-play command out of the box. `jackpot_sparsity.py` observes performance of obtained jackpot over sparsity levels beyond 50% to analyze optimal operating point of compressed model.
 
 ## Training outputs
 
