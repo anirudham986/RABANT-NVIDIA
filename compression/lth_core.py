@@ -1,23 +1,3 @@
-# =============================================================================
-# compression/lth_core.py
-# Core LTH machinery: importance scoring, masking, and the fine-tuning loop.
-#
-# Mathematical foundations:
-#   Magnitude:  I_i = |w_i|
-#   EMA grad:   I_i = EMA_β(|∂L/∂w_i|)  (bias-corrected)
-#   Fisher:     I_i = E[(∂L/∂w_i)²]     (diagonal FIM approximation)
-#   Movement:   I_i = |w_i^final - w_i^init|
-#
-#   Percentile rank fusion (scale-invariant):
-#     S_i = Σ_k α_k · rank_k(I_i^k)
-#     where rank_k maps the k-th signal to [0,1] (0=least important)
-#
-#   LTH (Frankle & Carlin 2019):
-#     1. Prune lowest-S weights globally
-#     2. Rewind surviving weights to initial values
-#     3. Fine-tune with masks frozen
-# =============================================================================
-
 import time
 import numpy as np
 import torch
@@ -79,10 +59,10 @@ def _enable_gradient_checkpointing(model: nn.Module):
             pass
 
     if enabled:
-        print("   ✅ Gradient checkpointing enabled on backbone "
+        print("Gradient checkpointing enabled on backbone "
               "(activation memory ~50% lower)")
     else:
-        print("   ⚠️  Could not enable gradient checkpointing — "
+        print("Could not enable gradient checkpointing — "
               "proceeding without it (OOM risk)")
 
 
@@ -180,7 +160,7 @@ class FisherInformationEstimator:
             count += 1
             self.n_batches += 1
 
-        print(f"   ✅ Fisher accumulated from {self.n_batches} batches")
+        print(f"Fisher accumulated from {self.n_batches} batches")
 
     def get_scores(self) -> dict:
         """Return averaged Fisher scores."""
@@ -420,8 +400,7 @@ def lth_finetune(
     use_amp = device.type == 'cuda'
     scaler = GradScaler('cuda') if use_amp else None
 
-    # ── Gradient checkpointing: recompute activations during backward
-    #    instead of storing them — halves activation memory with ~15% compute cost.
+    # Gradient checkpointing: recompute activations during backward instead of storing them — halves activation memory with ~15% compute cost.
     _enable_gradient_checkpointing(model)
 
     optimizer = optim.AdamW(
@@ -594,7 +573,7 @@ def lth_finetune(
             best_auroc = swa_m['auroc']
             best_state = {k: v.cpu() for k, v in model.state_dict().items()}
             best_metrics = swa_m
-            print(f"   ✅ SWA wins → using SWA weights")
+            print(f"SWA wins → using SWA weights")
         else:
             # Reload best (CPU tensors → GPU)
             model.load_state_dict(
@@ -689,7 +668,7 @@ def run_ema_warmup(
               f"AUROC={m['auroc']:.2f}%  Acc={m['accuracy']:.2f}%  "
               f"Steps={ema_tracker.step_count}")
 
-    print(f"   ✅ EMA tracked over {ema_tracker.step_count} gradient steps")
+    print(f"EMA tracked over {ema_tracker.step_count} gradient steps")
     return ema_tracker
 
 
@@ -766,4 +745,4 @@ def run_movement_warmup(
         print(f"   Move Warmup Ep {ep+1}: "
               f"AUROC={m['auroc']:.2f}%  Acc={m['accuracy']:.2f}%")
 
-    print(f"   ✅ Movement warmup complete")
+    print(f"Movement warmup complete")
