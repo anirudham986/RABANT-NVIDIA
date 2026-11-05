@@ -1,59 +1,6 @@
-#!/usr/bin/env python3
-# =============================================================================
-# kfold_50m_v2.py — 5-Fold Cross-Validation + Ablation Study
-#                    for the NTv2 50M Model (ALL 12 LAYERS UNFROZEN)
-# =============================================================================
-#
-# Usage (on GPU server):
-#   python3 kfold_50m_v2.py
-#
-# What this script does:
-#   1. Runs 5-fold stratified cross-validation on the consolidated dataset
-#      (05_consolidated_balanced.csv with pre-assigned FOLD_ID 0–4).
-#   2. For each fold:
-#      - Trains a fresh NTv2 50M model (all 12 layers, full fine-tuning)
-#      - Evaluates on the held-out fold
-#      - Performs per-layer weight magnitude ablation analysis
-#      - Saves best weights .pth for the fold
-#   3. Aggregates results across all 5 folds:
-#      - Mean ± Std for AUROC, Accuracy, F1, MCC, Precision, Recall, Specificity
-#      - 95% confidence intervals
-#      - Averaged per-layer ablation statistics
-#   4. Prints publication-ready summary tables
-#
-# NTv2-50M Architecture (official HuggingFace config.json):
-#   - 12 transformer layers
-#   - 16 attention heads per layer
-#   - 512 hidden dimension
-#   - 2048 FFN intermediate size (4× hidden)
-#   - ~50M total parameters
-#   - Vocabulary size: 4107 (6-mer tokenization)
-#
-# All hyperparameters are IDENTICAL to the 100M training:
-#   epochs=20, batch_size=32, grad_accum=4, backbone_lr=5e-6, head_lr=5e-4,
-#   focal_gamma=1.5, label_smoothing=0.05, patience=4, dropout=0.2
-#
-# CRITICAL: num_layers_to_unfreeze=12 (ALL layers, full fine-tuning)
-#   The original train_50m_baseline.py incorrectly used 4, which only
-#   unfroze 4 of 12 layers. This script correctly unfreezes all 12.
-#
-# Output:
-#   output/kfold_50m_v2/
-#     fold_0_best.pth               — weights for fold 0
-#     fold_0_metrics.json           — metrics for fold 0
-#     fold_0_history.json           — training history for fold 0
-#     fold_0_ablation.json          — per-layer weight analysis for fold 0
-#     ...                           — (same for folds 1–4)
-#     kfold_summary.json            — aggregated results (all folds)
-#     ablation_summary.json         — aggregated per-layer analysis
-#
-# Expected time: ~8–12 hours (5 folds × ~1.5–2.5 hours each)
-# =============================================================================
-
 import os
 os.environ.setdefault(
-    'PYTORCH_CUDA_ALLOC_CONF',
-    'expandable_segments:True,max_split_size_mb:256'
+    #environment setup placeholder
 )
 
 import sys
@@ -648,7 +595,7 @@ def main():
                 val_fold=fold_id,
             )
         except LeakageAuditError as e:
-            print(f"\n  🚨 LEAKAGE AUDIT FAILED for fold {fold_id}!")
+            print(f"\nLEAKAGE AUDIT FAILED for fold {fold_id}!")
             print(str(e))
             sys.exit(1)
 
@@ -713,9 +660,9 @@ def main():
 
         # Sanity check
         if CFG['num_layers_to_unfreeze'] >= n_layers:
-            print(f"  ✅ FULL fine-tuning confirmed (all {n_layers} layers trainable)")
+            print(f"FULL fine-tuning confirmed (all {n_layers} layers trainable)")
         else:
-            print(f"  ⚠️  PARTIAL fine-tuning: {CFG['num_layers_to_unfreeze']}/{n_layers} layers")
+            print(f"PARTIAL fine-tuning: {CFG['num_layers_to_unfreeze']}/{n_layers} layers")
 
         # --- Train ---
         print(f"\n  {'─'*60}")
@@ -760,7 +707,7 @@ def main():
         # Weights
         weights_path = os.path.join(save_dir, f'fold_{fold_id}_best.pth')
         torch.save(model.state_dict(), weights_path)
-        print(f"  💾 Fold {fold_id} weights: {weights_path} "
+        print(f"Fold {fold_id} weights: {weights_path} "
               f"({os.path.getsize(weights_path)/1e6:.1f} MB)")
 
         # Metrics
@@ -788,7 +735,7 @@ def main():
         with open(ablation_path, 'w') as f:
             json.dump(_make_serializable(ablation), f, indent=2)
 
-        print(f"  📊 Fold {fold_id} results saved to {save_dir}/")
+        print(f"Fold {fold_id} results saved to {save_dir}/")
 
         # --- Clean up GPU memory ---
         del model, train_loader, val_loader, train_dataset, val_dataset
@@ -802,7 +749,7 @@ def main():
         avg_fold_time = sum(fold_times) / completed
         eta = avg_fold_time * remaining
         eta_str = str(datetime.timedelta(seconds=int(eta)))
-        print(f"\n  ⏱ Folds completed: {completed}/{CFG['n_folds']} | "
+        print(f"\nFolds completed: {completed}/{CFG['n_folds']} | "
               f"Avg fold time: {str(datetime.timedelta(seconds=int(avg_fold_time)))} | "
               f"ETA: {eta_str}")
 
@@ -878,7 +825,7 @@ def main():
     summary_path = os.path.join(save_dir, 'kfold_summary.json')
     with open(summary_path, 'w') as f:
         json.dump(summary, f, indent=2, default=str)
-    print(f"  ✅ Master summary: {summary_path}")
+    print(f"Master summary: {summary_path}")
 
     # Save ablation summary
     ablation_summary = {
@@ -917,7 +864,7 @@ def main():
     ablation_summary_path = os.path.join(save_dir, 'ablation_summary.json')
     with open(ablation_summary_path, 'w') as f:
         json.dump(ablation_summary, f, indent=2, default=str)
-    print(f"  ✅ Ablation summary: {ablation_summary_path}")
+    print(f"Ablation summary: {ablation_summary_path}")
 
     # =========================================================================
     # FINAL BANNER
@@ -929,7 +876,7 @@ def main():
     mcc_vals = np.array([m['mcc'] for m in all_fold_metrics])
 
     print(f"\n{sep}")
-    print(f"  🎯 5-FOLD CROSS-VALIDATION COMPLETE — NTv2 50M (ALL 12 LAYERS)")
+    print(f"5-FOLD CROSS-VALIDATION COMPLETE — NTv2 50M (ALL 12 LAYERS)")
     print(f"{sep}")
     print(f"  AUROC:       {auroc_vals.mean():.4f} ± {auroc_vals.std(ddof=1):.4f}%")
     print(f"  Accuracy:    {acc_vals.mean():.4f} ± {acc_vals.std(ddof=1):.4f}%")
