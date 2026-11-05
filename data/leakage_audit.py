@@ -78,7 +78,7 @@ def run_audit(train_df: pd.DataFrame,
             f"Results would be INVALID."
         )
     results['variant_overlap'] = 0
-    print(f"   [✅] CHECK 1 — Train/Val variant overlap:          0 variants")
+    print(f"CHECK 1 — Train/Val variant overlap:          0 variants")
 
     # ----------------------------------------------------------------
     # CHECK 2: Intra-train duplicates
@@ -92,7 +92,7 @@ def run_audit(train_df: pd.DataFrame,
             f"(CHROM, POS, REF, ALT). This inflates training signal on repeated variants."
         )
     results['train_duplicates'] = 0
-    print(f"   [✅] CHECK 2 — Intra-train duplicate variants:     0 rows")
+    print(f"CHECK 2 — Intra-train duplicate variants:     0 rows")
 
     # ----------------------------------------------------------------
     # CHECK 3: Intra-val duplicates
@@ -106,7 +106,7 @@ def run_audit(train_df: pd.DataFrame,
             f"(CHROM, POS, REF, ALT). Evaluation metrics would be inflated."
         )
     results['val_duplicates'] = 0
-    print(f"   [✅] CHECK 3 — Intra-val duplicate variants:       0 rows")
+    print(f"CHECK 3 — Intra-val duplicate variants:       0 rows")
 
     # ----------------------------------------------------------------
     # CHECK 4: Label balance (within 10% of 50/50 — not strict 5%,
@@ -141,7 +141,7 @@ def run_audit(train_df: pd.DataFrame,
                 f"  The model may learn to predict the majority class trivially."
             )
         results[f'{split_name}_pct_pathogenic'] = round(pct_p, 2)
-        print(f"   [✅] CHECK 4 — {split_name.capitalize()} label balance: "
+        print(f"CHECK 4 — {split_name.capitalize()} label balance: "
               f"{pct_p:.1f}% pathogenic (P={n_p:,} B={n_b:,})")
 
     # ----------------------------------------------------------------
@@ -153,14 +153,14 @@ def run_audit(train_df: pd.DataFrame,
         missing_in_val = train_sources - val_sources
         if missing_in_val:
             # Warn but don't fail — with 5 folds some sources may be small
-            print(f"   [⚠️] CHECK 5 — Sources in train but not val: {missing_in_val}")
+            print(f"CHECK 5 — Sources in train but not val: {missing_in_val}")
             print(f"              (Non-fatal: small source may not appear in every fold)")
         else:
-            print(f"   [✅] CHECK 5 — Val source diversity:  "
+            print(f"CHECK 5 — Val source diversity:  "
                   f"{sorted(val_sources)}")
         results['val_sources'] = sorted(val_sources)
     else:
-        print(f"   [ℹ️] CHECK 5 — SOURCE_TAG column absent — skipping source diversity check")
+        print(f"CHECK 5 — SOURCE_TAG column absent — skipping source diversity check")
 
     # ----------------------------------------------------------------
     # CHECK 6: Minimum size sanity
@@ -180,7 +180,7 @@ def run_audit(train_df: pd.DataFrame,
         )
     results['train_size'] = len(train_df)
     results['val_size']   = len(val_df)
-    print(f"   [✅] CHECK 6 — Split sizes:  train={len(train_df):,}  val={len(val_df):,}")
+    print(f"CHECK 6 — Split sizes:  train={len(train_df):,}  val={len(val_df):,}")
 
     # ----------------------------------------------------------------
     # CHECK 7: FOLD_ID integrity (consolidated only)
@@ -203,18 +203,18 @@ def run_audit(train_df: pd.DataFrame,
                     f"These should not be in train."
                 )
         results['val_fold_id'] = actual_fold
-        print(f"   [✅] CHECK 7 — FOLD_ID integrity: val_fold={actual_fold} is clean")
+        print(f"CHECK 7 — FOLD_ID integrity: val_fold={actual_fold} is clean")
     elif dataset_name == 'consolidated_full':
         # Full-train mode: holdout has no FOLD_ID — this is expected
-        print(f"   [✅] CHECK 7 — Holdout mode: no FOLD_ID needed (full-train + unseen holdout)")
+        print(f"CHECK 7 — Holdout mode: no FOLD_ID needed (full-train + unseen holdout)")
     else:
-        print(f"   [ℹ️] CHECK 7 — FOLD_ID column absent — skipping fold integrity check")
+        print(f"CHECK 7 — FOLD_ID column absent — skipping fold integrity check")
 
     # ----------------------------------------------------------------
     # PASS
     # ----------------------------------------------------------------
     print("=" * 70)
-    print(f"   ✅ ALL LEAKAGE CHECKS PASSED — Safe to begin training")
+    print(f"ALL LEAKAGE CHECKS PASSED — Safe to begin training")
     print("=" * 70 + "\n")
 
     results['passed'] = True
