@@ -259,13 +259,13 @@ def verify_no_leakage(df: pd.DataFrame, n_folds: int):
     # Check 1: No duplicate variant keys in the consolidated set
     dup = df['VARIANT_KEY'].duplicated().sum()
     assert dup == 0, f"FATAL: {dup} duplicate VARIANT_KEYs in consolidated set!"
-    print(f"   [✅] Duplicate VARIANT_KEYs: 0")
+    print(f"Duplicate VARIANT_KEYs: 0")
 
     # Check 2: Each variant assigned exactly one fold
     fold_counts = df.groupby('VARIANT_KEY')['FOLD_ID'].nunique()
     multi = (fold_counts > 1).sum()
     assert multi == 0, f"FATAL: {multi} variants assigned to multiple folds!"
-    print(f"   [✅] Variants in multiple folds: 0")
+    print(f"Variants in multiple folds: 0")
 
     # Check 3: Simulate each train/val split and verify zero overlap
     all_keys = set(df['VARIANT_KEY'])
@@ -275,9 +275,9 @@ def verify_no_leakage(df: pd.DataFrame, n_folds: int):
         overlap = train_keys & val_keys
         assert len(overlap) == 0, \
             f"FATAL: fold {val_fold} has {len(overlap)} train/val overlapping variants!"
-        print(f"   [✅] Fold {val_fold} — train/val overlap: 0")
+        print(f"Fold {val_fold} — train/val overlap: 0")
 
-    print("   [✅] ALL LEAKAGE CHECKS PASSED")
+    print("ALL LEAKAGE CHECKS PASSED")
 
 
 def main():
@@ -369,7 +369,7 @@ def main():
     out_path = os.path.join(out_dir, '05_consolidated_balanced.csv')
     df_out.to_csv(out_path, index=False)
 
-    print(f"   ✅ Saved: {out_path}")
+    print(f"Saved: {out_path}")
     print(f"   Rows:    {len(df_out):,}")
     print(f"   Cols:    {list(df_out.columns)}")
 
@@ -384,7 +384,7 @@ def main():
     print(f"   Pathogenic:      {int((df_out['INT_LABEL']==1).sum()):,}")
     print(f"   Benign:          {int((df_out['INT_LABEL']==0).sum()):,}")
     print(f"   Folds:           {args.n_folds} (use FOLD_ID column)")
-    print(f"   Leakage:         ✅ ZERO — verified across all fold splits")
+    print(f"   Leakage:         ZERO — verified across all fold splits")
     print("\n   Next step: python train.py --dataset consolidated --fold 0")
     print("=" * 70)
 
