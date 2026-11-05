@@ -166,9 +166,9 @@ def main():
     # --- Discover .pth files ---
     pth_list = find_jackpot_pths(args.jackpot_dir)
     if not pth_list:
-        print("❌ No jackpot .pth files found!")
-        print(f"   Searched: {args.jackpot_dir}")
-        print(f"   Expected: magnitude_sparsity{{55,70,80,90}}.pth")
+        print("No jackpot .pth files found!")
+        print(f"Searched: {args.jackpot_dir}")
+        print(f"Expected: magnitude_sparsity{{55,70,80,90}}.pth")
         sys.exit(1)
 
     print(f"  Found {len(pth_list)} jackpot .pth files:")
@@ -206,7 +206,7 @@ def main():
         dropout=DROPOUT,
     ).to(device)
     total_params = sum(p.numel() for p in model.parameters())
-    print(f"   ✅ Model architecture: {total_params:,} parameters")
+    print(f"Model architecture: {total_params:,} parameters")
 
     # --- Load Test Data (once, shared across all .pth evaluations) ---
     print(f"\n{'─'*78}")
@@ -278,10 +278,10 @@ def main():
                       f"F1={m['f1']:.2f}%  MCC={m['mcc']:.4f}")
 
             elapsed = time.time() - t0
-            print(f"   ✅ {label} done in {elapsed:.0f}s")
+            print(f"{label} done in {elapsed:.0f}s")
 
         except Exception as e:
-            print(f"   ❌ {label} FAILED: {e}")
+            print(f"{label} FAILED: {e}")
             all_results[result_key] = {'error': str(e)}
 
         if device.type == 'cuda':
@@ -363,13 +363,13 @@ def main():
     os.makedirs(os.path.dirname(summary_path), exist_ok=True)
     with open(summary_path, 'w') as f:
         json.dump(summary, f, indent=2, default=str)
-    print(f"\n  ✅ Results saved: {summary_path}")
+    print(f"\nResults saved: {summary_path}")
 
     # --- Final banner ---
     total_time = time.time() - start_time
     total_str = str(datetime.timedelta(seconds=int(total_time)))
     print(f"\n{'═'*78}")
-    print(f"  🎯 JACKPOT SPARSITY UNSEEN TEST EVALUATION COMPLETE")
+    print(f"JACKPOT SPARSITY UNSEEN TEST EVALUATION COMPLETE")
     print(f"     Models tested: {len(pth_list)}")
     print(f"     Sparsities: {[f'{s}%' for s in SPARSITIES]}")
     print(f"     Test sets: 3 (07/08/09)")
