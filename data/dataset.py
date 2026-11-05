@@ -125,9 +125,9 @@ class DualSeqDataset(Dataset):
 
         # Summary statistics
         np_labels = np.array(self.labels)
-        print(f"   ✅ {len(self.labels):,} variant pairs extracted")
+        print(f"{len(self.labels):,} variant pairs extracted")
         if skipped:
-            print(f"   ⚠️ Skipped {skipped:,} (unmapped/invalid)")
+            print(f"Skipped {skipped:,} (unmapped/invalid)")
         print(f"      Pathogenic: {np_labels.sum():,} | "
               f"Benign: {(1 - np_labels).sum():,}")
 
