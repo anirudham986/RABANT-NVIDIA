@@ -1,56 +1,6 @@
-#!/usr/bin/env python3
-# =============================================================================
-# kfold_magnitude_compressed.py — 5-Fold Cross-Validation + Ablation Study
-#                                  for the Magnitude-Compressed NTv2 100M Model
-#                                  (LTH @ 50% Sparsity)
-# =============================================================================
-#
-# Usage (on GPU server):
-#   python3 kfold_magnitude_compressed.py
-#
-# What this script does:
-#   For each of 5 folds (FOLD_ID 0–4):
-#     Phase A — Dense Training (identical to kfold_dense_100m.py):
-#       1. Train a fresh NTv2 100M model on 4 folds (all 22 layers, full FT)
-#       2. Save pre-trained initial weights BEFORE dense training (for LTH rewind)
-#       3. Record dense validation metrics on held-out fold
-#
-#     Phase B — LTH Magnitude Compression:
-#       4. Compute magnitude importance scores |w_i| from the dense-trained model
-#       5. Create global pruning masks at 50% target sparsity
-#       6. LTH weight rewinding: surviving weights ← pre-trained initial values
-#       7. Fine-tune with frozen masks (LR rewinding, SWA, gradient checkpointing)
-#       8. Evaluate compressed model on held-out fold
-#       9. Per-layer sparsity ablation (which layers lost how many weights)
-#
-#   After all 5 folds:
-#     - Aggregated Mean ± Std, 95% CI for both dense and compressed
-#     - Δ comparison (compressed vs dense per fold)
-#     - Averaged per-layer ablation statistics
-#     - Publication-ready summary tables
-#
-# Hyperparameters:
-#   Dense training: identical to train.py / kfold_dense_100m.py
-#   LTH fine-tuning: identical to compression/shared.py COMPRESSION_CFG
-#
-# Output:
-#   output/kfold_magnitude_compressed/
-#     fold_0_dense_metrics.json       — dense val metrics for fold 0
-#     fold_0_compressed_metrics.json  — compressed val metrics for fold 0
-#     fold_0_compressed_best.pth      — best compressed weights for fold 0
-#     fold_0_ablation.json            — per-layer sparsity analysis for fold 0
-#     ...                             — (same for folds 1–4)
-#     kfold_summary.json              — aggregated results (dense + compressed)
-#     ablation_summary.json           — aggregated per-layer analysis
-#
-# GPU: NVIDIA GPU with ≥40GB VRAM
-# Expected time: ~15–20 hours (5 folds × ~3–4 hours each)
-# =============================================================================
-
 import os
 os.environ.setdefault(
-    'PYTORCH_CUDA_ALLOC_CONF',
-    'expandable_segments:True,max_split_size_mb:256'
+    #environment setup placehoder
 )
 
 import sys
@@ -442,7 +392,7 @@ def print_kfold_summary(all_dense, all_compressed, total_time_str):
         fmt_m = f".{decimals}f"
         sign = "+" if mean_d >= 0 else ""
         delta_str = f"{sign}{mean_d:{fmt_m}} ± {std_d:{fmt_m}}"
-        verdict = "✅ OK" if abs(mean_d) < 2.0 else ("📉 DROP" if mean_d < 0 else "🔺 GAIN")
+        verdict = "OK" if abs(mean_d) < 2.0 else ("DROP" if mean_d < 0 else "GAIN")
         print(f"  │ {label:<28} │ {delta_str:>18} │ {verdict:>10} │")
 
     print(f"  └─{'─'*28}─┴─{'─'*18}─┴─{'─'*10}─┘")
@@ -616,7 +566,7 @@ def main():
                 val_fold=fold_id,
             )
         except LeakageAuditError as e:
-            print(f"\n  🚨 LEAKAGE AUDIT FAILED for fold {fold_id}!")
+            print(f"\nLEAKAGE AUDIT FAILED for fold {fold_id}!")
             print(str(e))
             sys.exit(1)
 
@@ -780,7 +730,7 @@ def main():
         apply_masks(model, masks, device)  # ensure masks enforced
         actual_sp = count_sparsity(model, masks)
 
-        print(f"\n  ✅ Compressed Fold {fold_id}: AUROC={compressed_metrics['auroc']:.4f}%  "
+        print(f"\nCompressed Fold {fold_id}: AUROC={compressed_metrics['auroc']:.4f}%  "
               f"Acc={compressed_metrics['accuracy']:.4f}%  "
               f"Actual sparsity={actual_sp*100:.2f}%")
 
@@ -927,7 +877,7 @@ def main():
     summary_path = os.path.join(SAVE_DIR, 'kfold_summary.json')
     with open(summary_path, 'w') as f:
         json.dump(summary, f, indent=2, default=str)
-    print(f"  ✅ Master summary: {summary_path}")
+    print(f"Master summary: {summary_path}")
 
     # Save ablation summary
     ablation_summary = {
@@ -961,7 +911,7 @@ def main():
     ablation_path = os.path.join(SAVE_DIR, 'ablation_summary.json')
     with open(ablation_path, 'w') as f:
         json.dump(ablation_summary, f, indent=2, default=str)
-    print(f"  ✅ Ablation summary: {ablation_path}")
+    print(f"Ablation summary: {ablation_path}")
 
     # =========================================================================
     # FINAL BANNER
@@ -975,7 +925,7 @@ def main():
     delta_auroc = c_auroc - d_auroc
 
     print(f"\n{sep}")
-    print(f"  🎯 5-FOLD CV COMPLETE — MAGNITUDE-COMPRESSED NTv2 100M @ {TARGET_SPARSITY*100:.0f}%")
+    print(f"5-FOLD CV COMPLETE — MAGNITUDE-COMPRESSED NTv2 100M @ {TARGET_SPARSITY*100:.0f}%")
     print(f"{sep}")
     print(f"  Dense AUROC:      {d_auroc.mean():.4f} ± {d_auroc.std(ddof=1):.4f}%")
     print(f"  Compressed AUROC: {c_auroc.mean():.4f} ± {c_auroc.std(ddof=1):.4f}%")
