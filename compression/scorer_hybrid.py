@@ -190,13 +190,13 @@ def run(
                                          desc="Dense Baseline")
     print_metrics_block(baseline_metrics, label="Dense Baseline", indent="  ")
 
-    # ── Phase A: Accumulate ALL 4 signals (once) ───────────────────────────
+    # Phase A: Accumulating ALL 4 signals (once)
 
     # ---- A1: EMA Warmup ----
     ema_tracker = EMAGradientTracker(model, beta=cfg['ema_beta'])
     run_ema_warmup(model, train_loader, val_loader, device, cfg, ema_tracker)
     ema_scores = ema_tracker.get_scores()
-    print(f"  ✅ EMA: {len(ema_scores)} tensors, {ema_tracker.step_count} steps")
+    print(f"EMA: {len(ema_scores)} tensors, {ema_tracker.step_count} steps")
 
     # After EMA warmup the model has drifted — reload for Fisher
     model.load_state_dict(
@@ -211,7 +211,7 @@ def run(
     fisher_est = FisherInformationEstimator(model, device)
     fisher_est.accumulate(model, train_loader, n_batches=cfg['fisher_batches'])
     fisher_scores = fisher_est.get_scores()
-    print(f"  ✅ Fisher: {len(fisher_scores)} tensors")
+    print(f"Fisher: {len(fisher_scores)} tensors")
 
     # Reload dense weights again before movement warmup
     model.load_state_dict(
@@ -229,7 +229,7 @@ def run(
     for name, param in model.named_parameters():
         if _is_prunable(name, param) and name in initial_weights:
             movement_scores[name] = (param.data.cpu() - initial_weights[name]).abs()
-    print(f"  ✅ Movement: {len(movement_scores)} tensors")
+    print(f"Movement: {len(movement_scores)} tensors")
 
     # ---- A4: Magnitude is computed on-the-fly from initial weights ----
     # (no warmup needed; magnitude is directly available from initial_weights)
@@ -317,7 +317,7 @@ def run(
         actual_sp = count_sparsity(model, masks)
 
         t_elapsed = time.time() - t_start
-        print(f"\n  ✅ HYBRID @ {sp*100:.0f}% done in {t_elapsed/60:.1f} min")
+        print(f"\nHYBRID @ {sp*100:.0f}% done in {t_elapsed/60:.1f} min")
         print(f"     Actual sparsity: {actual_sp*100:.2f}%")
 
         print_metrics_block(
@@ -333,10 +333,10 @@ def run(
         )
         delta_vs_best = best_metrics['auroc'] - best_ind_auroc
         if delta_vs_best > 0:
-            print(f"  🏆 Hybrid EXCEEDS best individual scorer by "
+            print(f"Hybrid EXCEEDS best individual scorer by "
                   f"{delta_vs_best:+.4f}% AUROC at {sp*100:.0f}% sparsity!")
         else:
-            print(f"  ℹ️  Hybrid vs best individual: {delta_vs_best:+.4f}% AUROC")
+            print(f"Hybrid vs best individual: {delta_vs_best:+.4f}% AUROC")
 
         # Save weights-only .pth
         pth_path = os.path.join(out_dir, f"hybrid_sparsity{int(sp*100):02d}.pth")
