@@ -18,7 +18,6 @@
 #
 # Model: NTv2-50M (12 layers, 16 heads, 512 hidden, all unfrozen)
 # Weights: output/kfold_50m_v2/fold_{0..4}_best.pth
-# Output:  output/kfold_50m_v2_unseen/
 # =============================================================================
 
 import argparse
@@ -457,7 +456,7 @@ def main():
     with open(summary_path, 'w') as f:
         json.dump(summary, f, indent=2, default=str)
 
-    print(f"\n  ✅ Summary saved: {summary_path}")
+    print(f"\nSummary saved: {summary_path}")
     print(f"  Total time: {total_time}")
     print("=" * 78)
 
